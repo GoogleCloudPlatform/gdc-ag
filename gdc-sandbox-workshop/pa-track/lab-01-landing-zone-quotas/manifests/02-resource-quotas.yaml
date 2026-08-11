@@ -1,0 +1,140 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# ==============================================================================
+# Tier 1: Standard Development Quota (finance-dev)
+# Purpose: Guardrails for developer iteration while preventing cluster sprawl
+# ==============================================================================
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: finance-dev-quota
+  namespace: finance-dev
+  labels:
+    gdc.google.com/tier: standard-dev
+    app.kubernetes.io/managed-by: gdc-platform-admin
+spec:
+  hard:
+    # Compute Quotas (vCPU & RAM)
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    
+    # Storage Quotas
+    requests.storage: 50Gi
+    persistentvolumeclaims: "5"
+    
+    # Object Count Quotas
+    pods: "10"
+    count/deployments.apps: "10"
+    count/statefulsets.apps: "3"
+    count/jobs.batch: "20"
+    count/cronjobs.batch: "5"
+    count/configmaps: "30"
+    count/secrets: "30"
+    
+    # Network Service Guardrails
+    services: "10"
+    services.loadbalancers: "1"
+    services.nodeports: "0"  # Enforces ingress via LoadBalancer/Internal Ingress only
+    
+    # Hardware Accelerators (Disallowed in Dev Tier)
+    requests.nvidia.com/gpu: "0"
+
+---
+# ==============================================================================
+# Tier 2: Mission-Critical Production Quota (finance-prod)
+# Purpose: High availability, dedicated reservation, strict scaling headroom
+# ==============================================================================
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: finance-prod-quota
+  namespace: finance-prod
+  labels:
+    gdc.google.com/tier: mission-critical-prod
+    app.kubernetes.io/managed-by: gdc-platform-admin
+spec:
+  hard:
+    # Compute Quotas (vCPU & RAM)
+    requests.cpu: "16"
+    requests.memory: 32Gi
+    limits.cpu: "32"
+    limits.memory: 64Gi
+    
+    # Storage Quotas
+    requests.storage: 250Gi
+    persistentvolumeclaims: "15"
+    
+    # Object Count Quotas
+    pods: "30"
+    count/deployments.apps: "20"
+    count/statefulsets.apps: "10"
+    count/jobs.batch: "50"
+    count/cronjobs.batch: "15"
+    count/configmaps: "100"
+    count/secrets: "100"
+    
+    # Network Service Guardrails
+    services: "25"
+    services.loadbalancers: "5"
+    services.nodeports: "0"
+    
+    # Hardware Accelerators
+    requests.nvidia.com/gpu: "0"
+
+---
+# ==============================================================================
+# Tier 3: GPU Analytics & AI Laboratory Quota (analytics-lab)
+# Purpose: High-memory, multi-core, and dedicated NVIDIA GPU accelerators
+# ==============================================================================
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: analytics-lab-quota
+  namespace: analytics-lab
+  labels:
+    gdc.google.com/tier: gpu-analytics
+    app.kubernetes.io/managed-by: gdc-platform-admin
+spec:
+  hard:
+    # Compute Quotas (vCPU & RAM)
+    requests.cpu: "32"
+    requests.memory: 64Gi
+    limits.cpu: "64"
+    limits.memory: 128Gi
+    
+    # Storage Quotas (Large Datasets)
+    requests.storage: 500Gi
+    persistentvolumeclaims: "20"
+    
+    # Object Count Quotas
+    pods: "25"
+    count/deployments.apps: "10"
+    count/statefulsets.apps: "5"
+    count/jobs.batch: "100"
+    count/cronjobs.batch: "20"
+    count/configmaps: "50"
+    count/secrets: "50"
+    
+    # Network Service Guardrails
+    services: "15"
+    services.loadbalancers: "2"
+    services.nodeports: "0"
+    
+    # Hardware Accelerators (GPU Pool Access)
+    requests.nvidia.com/gpu: "4"
+    limits.nvidia.com/gpu: "4"

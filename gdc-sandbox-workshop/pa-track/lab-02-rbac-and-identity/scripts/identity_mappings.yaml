@@ -1,0 +1,97 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# ==============================================================================
+# GDC Air-Gapped RBAC & Identity Mapping Specification
+# Used by: provision-rbac.py to generate and enforce RoleBindings,
+#          ServiceAccounts, and CI/CD Pipeline credentials.
+# ==============================================================================
+
+identityGovernanceVersion: "v1.0"
+identityProvider: "keycloak-oidc"
+
+tenants:
+  - namespace: finance-dev
+    description: "Finance Core Development Environment"
+    roleBindings:
+      - role: gdc-tenant-admin
+        bindingName: finance-dev-admins-binding
+        groups:
+          - finance-admins-grp
+        users:
+          - finance-lead@example.com
+      - role: gdc-developer-role
+        bindingName: finance-dev-developers-binding
+        groups:
+          - developers-grp
+          - finance-devs-grp
+        users:
+          - alice-dev@example.com
+      - role: gdc-auditor-role
+        bindingName: finance-dev-auditors-binding
+        groups:
+          - auditors-grp
+          - compliance-auditors-grp
+        users:
+          - audit-bot@example.com
+    serviceAccounts:
+      - name: gitlab-deployer-sa
+        role: gdc-cicd-deployer-role
+        pipeline: gitlab-ci
+        createTokenSecret: true
+
+  - namespace: finance-prod
+    description: "Finance Mission-Critical Production Environment"
+    roleBindings:
+      - role: gdc-tenant-admin
+        bindingName: finance-prod-admins-binding
+        groups:
+          - finance-admins-grp
+        users:
+          - prod-operator@example.com
+      - role: gdc-auditor-role
+        bindingName: finance-prod-auditors-binding
+        groups:
+          - auditors-grp
+          - compliance-auditors-grp
+          - finance-devs-grp  # Developers have strictly Read-Only access in Production!
+    serviceAccounts:
+      - name: gitlab-deployer-sa
+        role: gdc-cicd-deployer-role
+        pipeline: gitlab-ci
+        createTokenSecret: true
+
+  - namespace: analytics-lab
+    description: "Data Science & AI Analytics Laboratory"
+    roleBindings:
+      - role: gdc-tenant-admin
+        bindingName: analytics-lab-admins-binding
+        groups:
+          - analytics-admins-grp
+      - role: gdc-developer-role
+        bindingName: analytics-lab-scientists-binding
+        groups:
+          - data-scientists-grp
+        users:
+          - scientist-lead@example.com
+      - role: gdc-auditor-role
+        bindingName: analytics-lab-auditors-binding
+        groups:
+          - auditors-grp
+    serviceAccounts:
+      - name: jenkins-analytics-sa
+        role: gdc-cicd-deployer-role
+        pipeline: jenkins
+        createTokenSecret: true

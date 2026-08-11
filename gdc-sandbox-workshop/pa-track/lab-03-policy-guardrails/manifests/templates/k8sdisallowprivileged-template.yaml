@@ -1,0 +1,82 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdisallowprivileged
+  annotations:
+    description: >-
+      Disallows running containers in privileged mode and prevents the addition
+      of dangerous Linux capabilities such as CAP_SYS_ADMIN or ALL.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDisallowPrivileged
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            disallowedCapabilities:
+              type: array
+              description: "List of disallowed capabilities (e.g. SYS_ADMIN, ALL, NET_ADMIN)."
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdisallowprivileged
+
+        # Check privileged: true
+        violation[{"msg": msg}] {
+          container := get_containers[_]
+          container.securityContext.privileged == true
+          msg := sprintf("Container '%v' is running in privileged mode (securityContext.privileged: true), which is strictly prohibited.", [container.name])
+        }
+
+        # Check disallowed capabilities in securityContext.capabilities.add
+        violation[{"msg": msg}] {
+          container := get_containers[_]
+          cap := container.securityContext.capabilities.add[_]
+          disallowed := get_disallowed_caps[_]
+          upper_cap := upper(trim_prefix(cap, "CAP_"))
+          upper_disallowed := upper(trim_prefix(disallowed, "CAP_"))
+          upper_cap == upper_disallowed
+          msg := sprintf("Container '%v' specifies forbidden Linux capability '%v'. Disallowed capabilities: %v", [container.name, cap, get_disallowed_caps])
+        }
+
+        # Check allowPrivilegeEscalation: true
+        violation[{"msg": msg}] {
+          container := get_containers[_]
+          container.securityContext.allowPrivilegeEscalation == true
+          msg := sprintf("Container '%v' has allowPrivilegeEscalation set to true, which is prohibited.", [container.name])
+        }
+
+        get_disallowed_caps = caps {
+          caps := input.parameters.disallowedCapabilities
+        }
+        get_disallowed_caps = ["SYS_ADMIN", "CAP_SYS_ADMIN", "ALL"] {
+          not input.parameters.disallowedCapabilities
+        }
+
+        get_containers[container] {
+          container := input.review.object.spec.containers[_]
+        }
+        get_containers[container] {
+          container := input.review.object.spec.initContainers[_]
+        }
+        get_containers[container] {
+          container := input.review.object.spec.ephemeralContainers[_]
+        }

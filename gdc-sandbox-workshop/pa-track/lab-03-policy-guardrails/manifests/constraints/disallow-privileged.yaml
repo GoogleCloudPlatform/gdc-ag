@@ -1,0 +1,44 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDisallowPrivileged
+metadata:
+  name: disallow-privileged
+  annotations:
+    description: >-
+      Enforces that tenant workloads do not execute with privileged container
+      mode or escalate privileges with dangerous capabilities.
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - gdc-system
+      - gke-system
+      - cert-manager
+      - platform
+      - config-management-system
+      - asm-system
+  parameters:
+    disallowedCapabilities:
+      - SYS_ADMIN
+      - CAP_SYS_ADMIN
+      - ALL
+      - NET_ADMIN
+      - DAC_OVERRIDE

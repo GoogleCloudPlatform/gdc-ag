@@ -1,0 +1,264 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# ==============================================================================
+# Role 1: GDC Tenant Project Administrator (ClusterRole)
+# Scope: Bound per-namespace to grant full lifecycle management of tenant
+#        workloads, network policies, and local RBAC without cluster-admin rights.
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gdc-tenant-admin
+  labels:
+    gdc.google.com/role-category: tenant-governance
+    app.kubernetes.io/managed-by: gdc-platform-admin
+rules:
+  # Core Workload & Configuration Resources
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/attach
+      - pods/exec
+      - pods/portforward
+      - pods/proxy
+      - pods/log
+      - pods/status
+      - services
+      - services/proxy
+      - services/status
+      - configmaps
+      - secrets
+      - persistentvolumeclaims
+      - persistentvolumeclaims/status
+      - serviceaccounts
+      - events
+      - replicationcontrollers
+    verbs: ["*"]
+
+  # Application Workloads
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - deployments/scale
+      - deployments/rollback
+      - deployments/status
+      - statefulsets
+      - statefulsets/scale
+      - statefulsets/status
+      - daemonsets
+      - daemonsets/status
+      - replicasets
+      - replicasets/scale
+    verbs: ["*"]
+
+  # Batch & Scheduled Processing
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - jobs/status
+      - cronjobs
+      - cronjobs/status
+    verbs: ["*"]
+
+  # Autoscaling & Ingress
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+      - horizontalpodautoscalers/status
+    verbs: ["*"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+      - ingresses/status
+      - networkpolicies
+    verbs: ["*"]
+
+  # Local Namespace RBAC Delegation
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - roles
+      - rolebindings
+    verbs: ["*"]
+
+  # Read-Only Inspection of Guardrails (Platform Admin manages these)
+  - apiGroups: [""]
+    resources:
+      - resourcequotas
+      - resourcequotas/status
+      - limitranges
+    verbs: ["get", "list", "watch"]
+
+---
+# ==============================================================================
+# Role 2: GDC Tenant Developer (ClusterRole)
+# Scope: Day-to-day deployment, debugging, log viewing, and service operations.
+#        Cannot modify RBAC, network policies, or resource quotas.
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gdc-developer-role
+  labels:
+    gdc.google.com/role-category: application-development
+    app.kubernetes.io/managed-by: gdc-platform-admin
+rules:
+  # Core Pods, Services, and Configuration
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - pods/exec
+      - pods/portforward
+      - pods/status
+      - services
+      - services/status
+      - configmaps
+      - secrets
+      - persistentvolumeclaims
+      - events
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Application Controllers
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - deployments/scale
+      - deployments/status
+      - statefulsets
+      - statefulsets/scale
+      - statefulsets/status
+      - daemonsets
+      - replicasets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Batch Jobs
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - jobs/status
+      - cronjobs
+      - cronjobs/status
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Autoscaling & Ingress
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Read-Only Inspection of Guardrails & Network Policies
+  - apiGroups: [""]
+    resources:
+      - resourcequotas
+      - limitranges
+      - serviceaccounts
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+    verbs: ["get", "list", "watch"]
+
+---
+# ==============================================================================
+# Role 3: GDC Compliance & Security Auditor (ClusterRole)
+# Scope: Purely read-only observational access across workloads, configurations,
+#        RBAC bindings, and quotas. Strictly denies pod exec, port-forward, & write.
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gdc-auditor-role
+  labels:
+    gdc.google.com/role-category: compliance-audit
+    app.kubernetes.io/managed-by: gdc-platform-admin
+rules:
+  - apiGroups: ["", "apps", "batch", "autoscaling", "networking.k8s.io", "rbac.authorization.k8s.io", "policy"]
+    resources:
+      - pods
+      - pods/log
+      - pods/status
+      - services
+      - services/status
+      - configmaps
+      - persistentvolumeclaims
+      - serviceaccounts
+      - events
+      - resourcequotas
+      - limitranges
+      - deployments
+      - statefulsets
+      - daemonsets
+      - replicasets
+      - jobs
+      - cronjobs
+      - horizontalpodautoscalers
+      - ingresses
+      - networkpolicies
+      - roles
+      - rolebindings
+      - poddisruptionbudgets
+    verbs: ["get", "list", "watch"]
+
+---
+# ==============================================================================
+# Role 4: GDC Automated CI/CD Deployer (ClusterRole)
+# Scope: Scoped permissions for external pipeline runners (GitLab CI / Jenkins)
+#        to apply application updates, secrets, and manage rollouts.
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gdc-cicd-deployer-role
+  labels:
+    gdc.google.com/role-category: automation-cicd
+    app.kubernetes.io/managed-by: gdc-platform-admin
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - services
+      - configmaps
+      - secrets
+      - persistentvolumeclaims
+      - events
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - deployments/scale
+      - deployments/status
+      - statefulsets
+      - daemonsets
+      - replicasets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

@@ -1,0 +1,126 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Cross-Tenant Egress Rule: Frontend -> Backend API
+# Deployed in: frontend-project
+# Explicitly authorizes frontend pods to establish TCP connections to backend-api services on ports 80, 8080, and 443.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-backend-api
+  namespace: frontend-project
+  labels:
+    gdc.google.com/security-tier: cross-tenant-contract
+    gdc.google.com/source-tenant: frontend-project
+    gdc.google.com/target-tenant: backend-api-project
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: backend-api-project
+          podSelector:
+            matchLabels:
+              app: backend-api
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: shared-services
+          podSelector:
+            matchLabels:
+              app: shared-backend
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 443
+
+---
+# Cross-Tenant Ingress Rule: Backend API <- Frontend
+# Deployed in: backend-api-project
+# Authorizes incoming TCP connections originating specifically from pods in frontend-project.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-from-frontend
+  namespace: backend-api-project
+  labels:
+    gdc.google.com/security-tier: cross-tenant-contract
+    gdc.google.com/source-tenant: frontend-project
+    gdc.google.com/target-tenant: backend-api-project
+spec:
+  podSelector:
+    matchLabels:
+      app: backend-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend-project
+          podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 443
+
+---
+# Cross-Tenant Ingress Rule: Shared Services <- Frontend & Backend
+# Deployed in: shared-services
+# Authorizes incoming connections to shared cluster resources from authorized tenant namespaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-shared-services
+  namespace: shared-services
+  labels:
+    gdc.google.com/security-tier: cross-tenant-contract
+    gdc.google.com/service: shared-backend
+spec:
+  podSelector:
+    matchLabels:
+      app: shared-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend-project
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: backend-api-project
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tenant-a
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 443
