@@ -1,0 +1,106 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Kubernetes API Server Audit Policy for GDC Air-Gapped Platform Auditing
+# Defines hierarchical event audit tiers for compliance tracking, anomaly detection, and forensics.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+metadata:
+  name: gdc-platform-audit-policy
+  labels:
+    gdc.google.com/component: audit-engine
+    gdc.google.com/compliance-profile: nist-800-53
+omitStages:
+  - "RequestReceived"
+rules:
+  # Tier 1: Log nothing for routine high-volume, read-only system calls
+  - level: None
+    users: ["system:kube-proxy", "system:apiserver"]
+    verbs: ["watch", "list", "get"]
+  - level: None
+    resources:
+      - group: "" # core
+        resources: ["events", "endpoints", "leases.coordination.k8s.io"]
+  - level: None
+    nonResourceURLs:
+      - "/healthz*"
+      - "/livez*"
+      - "/readyz*"
+      - "/version"
+      - "/metrics"
+
+  # Tier 2: RequestResponse for Privileged Actions, Authentication & IAM modifications
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "rbac.authorization.k8s.io"
+        resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+      - group: "authentication.k8s.io"
+        resources: ["tokenreviews"]
+      - group: "authorization.k8s.io"
+        resources: ["subjectaccessreviews", "localsubjectaccessreviews"]
+      - group: "" # core
+        resources: ["secrets", "serviceaccounts"]
+
+  # Tier 3: RequestResponse for Security Policies, NetworkPolicies & Pod Executions
+  - level: RequestResponse
+    resources:
+      - group: "networking.k8s.io"
+        resources: ["networkpolicies"]
+      - group: ""
+        resources: ["pods/exec", "pods/portforward", "pods/attach"]
+
+  # Tier 4: Metadata for Workload and Multi-Tenant Lifecycle Operations
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "apps"
+        resources: ["deployments", "statefulsets", "daemonsets"]
+      - group: ""
+        resources: ["namespaces", "persistentvolumeclaims", "services", "resourcequotas", "limitranges"]
+
+  # Fallback: Record Metadata for all other standard API requests
+  - level: Metadata
+    omitStages:
+      - "RequestReceived"
+
+---
+# GDC Air-Gapped Centralized Audit Log Forwarder Sink
+# Forwards audit event streams to the internal secure SIEM / Kafka / Syslog destination.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gdc-audit-sink-config
+  namespace: gdc-system
+  labels:
+    gdc.google.com/tier: platform-audit
+    gdc.google.com/sink-type: centralized-export
+data:
+  sink.conf: |
+    [Sink.SIEM]
+    Type = "Syslog"
+    Endpoint = "siem-collector.security.gdc.local:514"
+    Protocol = "TLS"
+    Facility = "AUTHPRIV"
+    Format = "RFC5424"
+    BufferCapacity = 50000
+    RetryInterval = "5s"
+
+    [Sink.Storage]
+    Type = "ObjectStorage"
+    Bucket = "gdc-compliance-audit-vault"
+    RetentionDays = 365
+    Encryption = "KMS-AES-256"
+    PartitionScheme = "year={YYYY}/month={MM}/day={DD}"

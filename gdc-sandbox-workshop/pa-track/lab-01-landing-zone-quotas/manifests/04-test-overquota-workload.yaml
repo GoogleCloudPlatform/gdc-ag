@@ -1,0 +1,143 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ==============================================================================
+# TEST CASE 1: CPU Quota Exhaustion in Dev Tier
+# Namespace Quota: requests.cpu = 4
+# Workload Request: 3 replicas * 2 vCPU = 6 vCPU (EXCEEDS QUOTA BY 2 vCPU)
+# Expected Result: Kubernetes ReplicaSet controller fails to admit pods with:
+#   "Forbidden: exceeded quota: finance-dev-quota, requested: requests.cpu=2, used: requests.cpu=4, limited: requests.cpu=4"
+# ==============================================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overquota-cpu-app
+  namespace: finance-dev
+  labels:
+    test-scenario: cpu-exhaustion
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: overquota-cpu-app
+  template:
+    metadata:
+      labels:
+        app: overquota-cpu-app
+    spec:
+      containers:
+      - name: stress-runner
+        image: harbor.zone1.google.gdch.test/library/gb-frontend:v4
+        resources:
+          requests:
+            cpu: "2"
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 2Gi
+
+# ==============================================================================
+# TEST CASE 2: Unauthorized GPU Request in Dev Tier
+# Namespace Quota: requests.nvidia.com/gpu = 0
+# Workload Request: 1 GPU
+# Expected Result: Immediate admission rejection upon Pod creation:
+#   "Forbidden: exceeded quota: finance-dev-quota, requested: requests.nvidia.com/gpu=1, used: requests.nvidia.com/gpu=0, limited: requests.nvidia.com/gpu=0"
+# ==============================================================================
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unauthorized-gpu-pod
+  namespace: finance-dev
+  labels:
+    test-scenario: unauthorized-gpu
+spec:
+  containers:
+  - name: cuda-test
+    image: gcr.io/google-samples/gb-frontend:v4
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+        nvidia.com/gpu: "1"
+      limits:
+        cpu: "1"
+        memory: 2Gi
+        nvidia.com/gpu: "1"
+
+# ==============================================================================
+# TEST CASE 3: LoadBalancer Service Limit Breach
+# Namespace Quota: services.loadbalancers = 1
+# Workload Request: Provision 2 LoadBalancer Services simultaneously
+# Expected Result: Service 1 succeeds; Service 2 is rejected with:
+#   "Forbidden: exceeded quota: finance-dev-quota, requested: services.loadbalancers=1, used: services.loadbalancers=1, limited: services.loadbalancers=1"
+# ==============================================================================
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-lb-service-1
+  namespace: finance-dev
+  labels:
+    test-scenario: loadbalancer-quota-1
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: sample-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-lb-service-2
+  namespace: finance-dev
+  labels:
+    test-scenario: loadbalancer-quota-2
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 8443
+  selector:
+    app: sample-app
+
+# ==============================================================================
+# TEST CASE 4: Container LimitRange Violation (Max CPU Ceiling)
+# LimitRange Max: cpu = 4
+# Workload Request: 1 Pod requesting 6 vCPU in a single container
+# Expected Result: Admission failure:
+#   "Pod 'oversized-container-pod' is forbidden: maximum cpu usage per Container is 4, but limit is 6"
+# ==============================================================================
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oversized-container-pod
+  namespace: finance-dev
+  labels:
+    test-scenario: limitrange-max-violation
+spec:
+  containers:
+  - name: heavy-compute
+    image: gcr.io/google-samples/gb-frontend:v4
+    resources:
+      requests:
+        cpu: "6"
+        memory: 4Gi
+      limits:
+        cpu: "6"
+        memory: 4Gi

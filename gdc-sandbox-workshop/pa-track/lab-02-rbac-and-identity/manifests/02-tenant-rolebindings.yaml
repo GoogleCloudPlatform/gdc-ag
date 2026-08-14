@@ -1,0 +1,205 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# ==============================================================================
+# Namespace: finance-dev RoleBindings
+# Maps Keycloak OIDC Groups to Scoped ClusterRoles
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finance-dev-admins-binding
+  namespace: finance-dev
+  labels:
+    gdc.google.com/tenant: finance
+    gdc.google.com/environment: development
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: finance-admins-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: finance-lead@example.com
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-tenant-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finance-dev-developers-binding
+  namespace: finance-dev
+  labels:
+    gdc.google.com/tenant: finance
+    gdc.google.com/environment: development
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: developers-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: finance-devs-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: alice-dev@example.com
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-developer-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finance-dev-auditors-binding
+  namespace: finance-dev
+  labels:
+    gdc.google.com/tenant: finance
+    gdc.google.com/environment: development
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: auditors-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: compliance-auditors-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: audit-bot@example.com
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-auditor-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ==============================================================================
+# Namespace: finance-prod RoleBindings
+# Enforces Strict Separation of Duties: Developers have Read-Only (Auditor) access!
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finance-prod-admins-binding
+  namespace: finance-prod
+  labels:
+    gdc.google.com/tenant: finance
+    gdc.google.com/environment: production
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: finance-admins-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: prod-operator@example.com
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-tenant-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finance-prod-auditors-binding
+  namespace: finance-prod
+  labels:
+    gdc.google.com/tenant: finance
+    gdc.google.com/environment: production
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: auditors-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: compliance-auditors-grp
+    apiGroup: rbac.authorization.k8s.io
+  # Developers can view production logs and statuses but cannot modify workloads
+  - kind: Group
+    name: finance-devs-grp
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-auditor-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ==============================================================================
+# Namespace: analytics-lab RoleBindings
+# Data Science Team Access & Admin Mappings
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-lab-admins-binding
+  namespace: analytics-lab
+  labels:
+    gdc.google.com/tenant: data-platform
+    gdc.google.com/environment: experimental-lab
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: analytics-admins-grp
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-tenant-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-lab-scientists-binding
+  namespace: analytics-lab
+  labels:
+    gdc.google.com/tenant: data-platform
+    gdc.google.com/environment: experimental-lab
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: data-scientists-grp
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: scientist-lead@example.com
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-developer-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-lab-auditors-binding
+  namespace: analytics-lab
+  labels:
+    gdc.google.com/tenant: data-platform
+    gdc.google.com/environment: experimental-lab
+    app.kubernetes.io/managed-by: gdc-platform-admin
+subjects:
+  - kind: Group
+    name: auditors-grp
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: gdc-auditor-role
+  apiGroup: rbac.authorization.k8s.io

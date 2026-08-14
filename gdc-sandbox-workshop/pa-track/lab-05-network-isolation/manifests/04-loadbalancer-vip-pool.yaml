@@ -1,0 +1,79 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# MetalLB IPAddressPool: Tenant Frontend Dedicated VIP Pool
+# Allocates isolated virtual IP addresses for tenant-facing LoadBalancer services.
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: tenant-frontend-vip-pool
+  namespace: metallb-system
+  labels:
+    gdc.google.com/tier: tenant-ingress
+    gdc.google.com/tenant: frontend-project
+spec:
+  addresses:
+    - 192.168.10.200-192.168.10.220
+  autoAssign: true
+  avoidBuggyIPs: true
+
+---
+# MetalLB IPAddressPool: Shared Services VIP Pool
+# Allocates virtual IP addresses for shared infrastructure services (e.g., Harbor, Elasticsearch, API Gateway).
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: shared-services-vip-pool
+  namespace: metallb-system
+  labels:
+    gdc.google.com/tier: platform-ingress
+    gdc.google.com/service: shared-services
+spec:
+  addresses:
+    - 192.168.10.221-192.168.10.240
+  autoAssign: true
+  avoidBuggyIPs: true
+
+---
+# MetalLB IPAddressPool: Dedicated Tenant B VIP Pool
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: tenant-b-vip-pool
+  namespace: metallb-system
+  labels:
+    gdc.google.com/tier: tenant-ingress
+    gdc.google.com/tenant: tenant-b
+spec:
+  addresses:
+    - 192.168.10.241-192.168.10.250
+  autoAssign: false # Requires explicit annotation on Service: metallb.io/address-pool: tenant-b-vip-pool
+  avoidBuggyIPs: true
+
+---
+# MetalLB L2Advertisement
+# Announces LoadBalancer VIPs across the local network layer in GDC Air-Gapped clusters.
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default-l2-advertisement
+  namespace: metallb-system
+  labels:
+    gdc.google.com/component: loadbalancer-router
+spec:
+  ipAddressPools:
+    - tenant-frontend-vip-pool
+    - shared-services-vip-pool
+    - tenant-b-vip-pool

@@ -1,0 +1,105 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Declarative Governance Configuration for Harbor Enterprise Registry in GDC Air-Gapped
+# Used by configure-harbor-governance.py and platform automation pipelines.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: harbor-governance-policy-sample-project-1
+  namespace: platform
+  labels:
+    app.kubernetes.io/part-of: gdc-harbor-governance
+    governance.gdc.goog/project: sample-project-1
+data:
+  policy.yaml: |
+    harborProject: "sample-project-1"
+    
+    # 1. Vulnerability & Security Gating
+    vulnerabilityScanning:
+      autoScanOnPush: true
+      preventVulnerableImages: true
+      severityThreshold: "high" # Blocks pulling images with High or Critical CVEs
+      cveAllowlist: []
+      
+    # 2. Tag Immutability Rules (Prevent overwriting release artifacts)
+    immutableTagRules:
+      - id: 1
+        priority: 1
+        disabled: false
+        action: "immutable"
+        template: "immutable_tag"
+        params:
+          scope: "repo"
+          repoMatching: "**"
+          tagMatching: "v*"
+      - id: 2
+        priority: 2
+        disabled: false
+        action: "immutable"
+        template: "immutable_tag"
+        params:
+          scope: "repo"
+          repoMatching: "**"
+          tagMatching: "release-*"
+
+    # 3. Artifact Retention Policy (Clean up temporary and stale CI images)
+    retentionPolicy:
+      algorithm: "or"
+      rules:
+        - id: 1
+          priority: 1
+          disabled: false
+          action: "retain"
+          template: "latestPushedK"
+          params:
+            latestPushedK: 10
+          scopeSelectors:
+            repository:
+              - kind: "doublestar"
+                pattern: "**"
+          tagSelectors:
+            - kind: "doublestar"
+              pattern: "**"
+              decoration: "matches"
+        - id: 2
+          priority: 2
+          disabled: false
+          action: "retain"
+          template: "always"
+          scopeSelectors:
+            repository:
+              - kind: "doublestar"
+                pattern: "**"
+          tagSelectors:
+            - kind: "doublestar"
+              pattern: "release-*"
+              decoration: "matches"
+
+    # 4. Robot Account Governance (Least-privilege workload access)
+    robotAccounts:
+      - name: "robot-sample-project-1-pull"
+        description: "Read-only image pull token for sample-project-1 tenant workloads"
+        duration: -1 # Never expires / Managed by PA rotation
+        permissions:
+          - kind: "project"
+            namespace: "sample-project-1"
+            access:
+              - resource: "repository"
+                action: "pull"
+              - resource: "artifact"
+                action: "read"
+              - resource: "tag"
+                action: "list"
