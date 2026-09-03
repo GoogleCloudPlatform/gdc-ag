@@ -77,11 +77,15 @@ cd gdc-ag/gdc-sandbox-workshop
 source .env
 ```
 
-5. In the browser, login to sandbox console and download `gdcloud_cli.tar.gz` from the console.
+5. In the browser, login to sandbox console as `Platofrm Admin`. Url is in the format `https://console.<org-name>.<zone>.google.gdch.text`
+ex. `https://console.org-1.zone1.google.gdch.text`
 
-6. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
+6. Download `gdcloud_cli.tar.gz` from the console.
 
-7. Login to `gdcloud` cli. 
+7. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
+  - Setting the bash scripts executable may be required.  `chmod +x *.sh`
+
+8. Login to `gdcloud` cli. 
 
 ```bash
 login
@@ -90,10 +94,12 @@ login
 8. Edit `projects_config.yaml` to add your projects and user permissions. 
 
 9. Run `./001-create-projects.py` to create the projects. 
+ - Setting the python scripts executable may be required.  `chmod +x *.py`
 
 10. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
 
 11. In console, attach project to `user-vm-1` cluster. 
+  - Kubernetes Engine -> Clusters > user-vm1 --> Attach Project
 
 12. Run `./003-createharborproject.sh` to create Harbor project.
 
