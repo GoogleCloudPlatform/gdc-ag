@@ -83,7 +83,6 @@ ex. `https://console.org-1.zone1.google.gdch.text`
 6. Download `gdcloud_cli.tar.gz` from the console.
 
 7. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
-  - Setting the bash scripts executable may be required.  `chmod +x *.sh`
 
 8. Login to `gdcloud` cli. 
 
@@ -94,7 +93,6 @@ login
 8. Edit `projects_config.yaml` to add your projects and user permissions. 
 
 9. Run `./001-create-projects.py` to create the projects. 
- - Setting the python scripts executable may be required.  `chmod +x *.py`
 
 10. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
 
