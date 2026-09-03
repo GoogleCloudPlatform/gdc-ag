@@ -1,0 +1,45 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# NON-COMPLIANT WORKLOAD: Demonstrates untrusted registry violation:
+# 1. Pulls directly from external docker.io registry (docker.io/library/nginx:1.25.4)
+#    instead of the approved internal Harbor registry (harbor.zone1.google.gdch.test/*)
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-external-image-pod
+  namespace: sample-project-1
+  labels:
+    app: security-test
+    compliance: non-compliant
+spec:
+  containers:
+    - name: nginx-external
+      image: docker.io/library/nginx:1.25.4
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        privileged: false
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi

@@ -1,0 +1,177 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# ==============================================================================
+# GDC Platform Administrator Landing Zone Configuration
+# Used by: apply-landing-zone.py to generate and enforce Namespaces,
+#          ResourceQuotas, and LimitRanges.
+# ==============================================================================
+
+landingZoneVersion: "v1.0"
+clusterName: "gdc-user-cluster"
+
+projects:
+  - name: finance-dev
+    description: "Development sandbox namespace for Finance Core engineering workloads"
+    owner: "finance-platform-team@example.com"
+    costCenter: "CC-FIN-1042"
+    environment: "development"
+    dataClassification: "internal"
+    tier: "standard-dev"
+    quota:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+        storage: "50Gi"
+        gpu: "0"
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+        gpu: "0"
+      counts:
+        pods: 10
+        deployments: 10
+        statefulsets: 3
+        jobs: 20
+        cronjobs: 5
+        configmaps: 30
+        secrets: 30
+        persistentvolumeclaims: 5
+      network:
+        services: 10
+        servicesLoadbalancers: 1
+        servicesNodeports: 0
+    limitRange:
+      container:
+        default:
+          cpu: "1"
+          memory: "2Gi"
+        defaultRequest:
+          cpu: "250m"
+          memory: "512Mi"
+        min:
+          cpu: "100m"
+          memory: "128Mi"
+        max:
+          cpu: "4"
+          memory: "8Gi"
+          gpu: "0"
+        maxLimitRequestRatio:
+          cpu: "4"
+          memory: "4"
+      pvc:
+        minStorage: "1Gi"
+        maxStorage: "25Gi"
+
+  - name: finance-prod
+    description: "Mission-critical production namespace for Finance Transaction and Ledger services"
+    owner: "finance-ops-oncall@example.com"
+    costCenter: "CC-FIN-1042"
+    environment: "production"
+    dataClassification: "restricted-financial"
+    tier: "mission-critical-prod"
+    quota:
+      requests:
+        cpu: "16"
+        memory: "32Gi"
+        storage: "250Gi"
+        gpu: "0"
+      limits:
+        cpu: "32"
+        memory: "64Gi"
+        gpu: "0"
+      counts:
+        pods: 30
+        deployments: 20
+        statefulsets: 10
+        jobs: 50
+        cronjobs: 15
+        configmaps: 100
+        secrets: 100
+        persistentvolumeclaims: 15
+      network:
+        services: 25
+        servicesLoadbalancers: 5
+        servicesNodeports: 0
+    limitRange:
+      container:
+        default:
+          cpu: "2"
+          memory: "4Gi"
+        defaultRequest:
+          cpu: "500m"
+          memory: "1Gi"
+        min:
+          cpu: "200m"
+          memory: "256Mi"
+        max:
+          cpu: "8"
+          memory: "16Gi"
+          gpu: "0"
+        maxLimitRequestRatio:
+          cpu: "4"
+          memory: "4"
+      pvc:
+        minStorage: "5Gi"
+        maxStorage: "100Gi"
+
+  - name: analytics-lab
+    description: "High-performance GPU and distributed data science analytics laboratory"
+    owner: "ai-data-research@example.com"
+    costCenter: "CC-DATA-8890"
+    environment: "experimental-lab"
+    dataClassification: "confidential-analytics"
+    tier: "gpu-analytics"
+    quota:
+      requests:
+        cpu: "32"
+        memory: "64Gi"
+        storage: "500Gi"
+        gpu: "4"
+      limits:
+        cpu: "64"
+        memory: "128Gi"
+        gpu: "4"
+      counts:
+        pods: 25
+        deployments: 10
+        statefulsets: 5
+        jobs: 100
+        cronjobs: 20
+        configmaps: 50
+        secrets: 50
+        persistentvolumeclaims: 20
+      network:
+        services: 15
+        servicesLoadbalancers: 2
+        servicesNodeports: 0
+    limitRange:
+      container:
+        default:
+          cpu: "8"
+          memory: "16Gi"
+        defaultRequest:
+          cpu: "1"
+          memory: "4Gi"
+        min:
+          cpu: "500m"
+          memory: "1Gi"
+        max:
+          cpu: "16"
+          memory: "32Gi"
+          gpu: "2"
+      pvc:
+        minStorage: "10Gi"
+        maxStorage: "200Gi"

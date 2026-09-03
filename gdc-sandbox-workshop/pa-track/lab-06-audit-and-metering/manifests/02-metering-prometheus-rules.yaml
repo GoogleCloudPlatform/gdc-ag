@@ -1,0 +1,94 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Prometheus / Monarch Recording and Alerting Rules for GDC Multi-Tenant Metering
+# Computes aggregated compute, memory, and persistent storage consumption per tenant namespace.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gdc-tenant-metering-rules
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    prometheus: gdc-prometheus
+    gdc.google.com/metering-engine: active
+spec:
+  groups:
+    - name: gdc.tenant.metering.recording.rules
+      interval: 30s
+      rules:
+        # 1. Real-time CPU Usage Rate per Tenant (in cores)
+        - record: tenant:cpu_usage_rate:cores
+          expr: sum by (namespace) (rate(container_cpu_usage_seconds_total{container!="", image!=""}[5m]))
+
+        # 2. Total CPU Requests per Tenant (in cores)
+        - record: tenant:cpu_requests:cores
+          expr: sum by (namespace) (kube_pod_container_resource_requests{resource="cpu"})
+
+        # 3. Total CPU Limits per Tenant (in cores)
+        - record: tenant:cpu_limits:cores
+          expr: sum by (namespace) (kube_pod_container_resource_limits{resource="cpu"})
+
+        # 4. Real-time Memory Working Set per Tenant (in bytes)
+        - record: tenant:memory_working_set:bytes
+          expr: sum by (namespace) (container_memory_working_set_bytes{container!="", image!=""})
+
+        # 5. Total Memory Requests per Tenant (in bytes)
+        - record: tenant:memory_requests:bytes
+          expr: sum by (namespace) (kube_pod_container_resource_requests{resource="memory"})
+
+        # 6. Total Memory Limits per Tenant (in bytes)
+        - record: tenant:memory_limits:bytes
+          expr: sum by (namespace) (kube_pod_container_resource_limits{resource="memory"})
+
+        # 7. Total Persistent Storage Requested per Tenant (in bytes)
+        - record: tenant:storage_pvc_requested:bytes
+          expr: sum by (namespace) (kube_persistentvolumeclaim_resource_requests_storage_bytes)
+
+        # 8. Actual Storage Used by Volumes per Tenant (in bytes)
+        - record: tenant:storage_volume_used:bytes
+          expr: sum by (namespace) (kubelet_volume_stats_used_bytes)
+
+        # 9. Tenant CPU Quota Utilization Ratio (0.0 - 1.0+)
+        - record: tenant:cpu_quota_utilization_ratio
+          expr: tenant:cpu_requests:cores / on(namespace) (kube_resourcequota{resource="requests.cpu", type="hard"})
+
+        # 10. Tenant Memory Quota Utilization Ratio (0.0 - 1.0+)
+        - record: tenant:memory_quota_utilization_ratio
+          expr: tenant:memory_requests:bytes / on(namespace) (kube_resourcequota{resource="requests.memory", type="hard"})
+
+    - name: gdc.tenant.metering.alerts
+      rules:
+        # Alert: Tenant approaching ResourceQuota limit (>85% saturation)
+        - alert: TenantResourceQuotaNearExhaustion
+          expr: tenant:cpu_quota_utilization_ratio > 0.85 or tenant:memory_quota_utilization_ratio > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            tier: platform-admin
+          annotations:
+            summary: "Tenant '{{ $labels.namespace }}' resource quota utilization exceeds 85%"
+            description: "Tenant project '{{ $labels.namespace }}' is saturating allocated capacity limits. Consider increasing quota or optimizing workloads."
+
+        # Alert: Tenant experiencing Out-Of-Memory (OOM) kills
+        - alert: TenantContainerOOMKilled
+          expr: rate(kube_pod_container_status_terminated_reason{reason="OOMKilled"}[15m]) > 0
+          for: 2m
+          labels:
+            severity: critical
+            tier: platform-admin
+          annotations:
+            summary: "Container OOMKilled detected in tenant '{{ $labels.namespace }}'"
+            description: "Workloads in namespace '{{ $labels.namespace }}' are exceeding memory limits and being terminated by the kernel OOM killer."

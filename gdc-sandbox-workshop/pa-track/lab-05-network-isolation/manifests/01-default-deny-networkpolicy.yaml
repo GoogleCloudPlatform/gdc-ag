@@ -1,0 +1,57 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Baseline Zero-Trust Default Deny NetworkPolicy
+# Applied to tenant namespaces to isolate workloads by default.
+# Blocks all ingress and egress traffic except for essential platform DNS resolution (UDP/TCP port 53).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-traffic
+  labels:
+    gdc.google.com/security-tier: baseline
+    gdc.google.com/policy-type: zero-trust-default-deny
+spec:
+  podSelector: {} # Selects all pods in the namespace
+  policyTypes:
+    - Ingress
+    - Egress
+  # Empty ingress list = deny all ingress from all sources
+  ingress: []
+  # Egress explicitly permits DNS resolution so workloads can discover services
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow communication to cluster local CoreDNS fallback
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: coredns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

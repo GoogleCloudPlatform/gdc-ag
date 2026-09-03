@@ -111,10 +111,31 @@ login
 
 
 
-## Labs
+## Learning Tracks
 
-These hands-on labs will guide you through deploying and managing workloads on GDC. You'll start with a simple HTML web server to learn the basics of building, deploying, and updating containerized applications. Then you'll progress to more complex services including a translation API with external dependencies and an Elasticsearch stack with Kibana for data analytics.
+The GDC Sandbox Workshop offers two dedicated tracks tailored to different operational personas:
 
-* [Lab 1 - Deploy HTML Server](./LAB-1.md)
-* [Lab 2 - Deploy API Server](./LAB-2.md)
-* [Lab 3 - Deploy Elasticsearch](./LAB-3.md)
+---
+
+### Track 1: Application Operator (AO) Track
+
+The Application Operator track focuses on deploying, scaling, and managing application microservices, containerization pipelines, and database backends in GDC.
+
+- **[Lab 1 - Deploy HTML Server](./LAB-1.md)**: Containerize and deploy a baseline web server, establish Harbor image pull secrets, and configure LoadBalancer services.
+- **[Lab 2 - Deploy API Server](./LAB-2.md)**: Deploy microservices with dependencies, manage ConfigMaps/Secrets, and test inter-service networking.
+- **[Lab 3 - Deploy Elasticsearch Stack](./LAB-3.md)**: Deploy stateful analytics workloads with Elasticsearch and Kibana on GDC storage.
+
+---
+
+### Track 2: Platform Administrator (PA) Track
+
+The **[Platform Administrator (PA) Track](./pa-track/README.md)** is designed for infrastructure engineers and security leads managing multi-tenant GDC Air-Gapped clusters, identity hierarchies, zero-trust network policies, compliance auditing, and capacity metering.
+
+- **[Lab 01 - Multi-Tenant Landing Zones & Quotas](./pa-track/lab-01-landing-zone-quotas/LAB-01.md)**: Design multi-tier project topologies, configure ResourceQuotas/LimitRanges, and test quota exhaustion.
+- **[Lab 02 - Air-Gapped RBAC & Identity Governance](./pa-track/lab-02-rbac-and-identity/LAB-02.md)**: Configure Keycloak OIDC group mappings, least-privilege RoleBindings, and automated CI/CD service account credentials.
+- **[Lab 03 - Policy Controller Guardrails & Compliance](./pa-track/lab-03-policy-guardrails/LAB-03.md)**: Deploy Gatekeeper/OPA ConstraintTemplates and Constraints to enforce non-root execution, trusted Harbor registry provenance, and resource limits.
+- **[Lab 04 - Harbor & DBaaS Shared Services Governance](./pa-track/lab-04-harbor-dbaas-governance/LAB-04.md)**: Configure Harbor vulnerability scanning with CVE severity gating, provision managed PostgreSQL/AlloyDB Omni instances, and manage backup policies.
+- **[Lab 05 - Zero-Trust Network Isolation & VIPs](./pa-track/lab-05-network-isolation/LAB-05.md)**: Enforce baseline default-deny NetworkPolicies, cross-tenant service contracts, and dedicated MetalLB LoadBalancer VIP pools.
+- **[Lab 06 - Platform Auditing & Capacity Metering](./pa-track/lab-06-audit-and-metering/LAB-06.md)**: Configure API server audit policy sinks, inspect security events with `inspect-audit-logs.py`, and compute multi-tenant resource utilization with `calculate-tenant-metering.py`.
+
+👉 **[Explore the Master PA Track Curriculum Guide](./pa-track/README.md)**
