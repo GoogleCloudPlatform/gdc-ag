@@ -84,26 +84,26 @@ ex. `https://console.org-1.zone1.google.gdch.text`
 
 7. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
 
-9. Login to `gdcloud` cli. 
+8. Login to `gdcloud` cli. 
 
 ```bash
 login
 ```
 
-10. Edit `projects_config.yaml` to add your projects and user permissions. 
+9. Edit `projects_config.yaml` to add your projects and user permissions. 
 
-11. Run `./001-create-projects.py` to create the projects. 
+10. Run `./001-create-projects.py` to create the projects. 
 
-12. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
+11. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
 
-13. In console, attach project to `user-vm-1` cluster. 
+12. In console, attach project to `user-vm-1` cluster. 
   - Kubernetes Engine -> Clusters > user-vm1 --> Attach Project
 
-14. Run `./003-createharborproject.sh` to create Harbor project.
+13. Run `./003-createharborproject.sh` to create Harbor project.
 
-15. In console, in Harbor project, create robot account and add to `.env`.  Re-run `source .env` and `login`. See [Lab guide](./LabGuide.pdf) for more details, screenshots and walk through. 
+14. In console, in Harbor project, create robot account and add to `.env`.  Re-run `source .env` and `login`. See [Lab guide](./LabGuide.pdf) for more details, screenshots and walk through. 
 
-16. Run `./004-addharborsecret.sh` to add Harbor secret to `user-vm-1` cluster. 
+15. Run `./004-addharborsecret.sh` to add Harbor secret to `user-vm-1` cluster. 
 
 You are now ready to start the labs.
 
