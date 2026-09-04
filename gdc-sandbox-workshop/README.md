@@ -77,31 +77,35 @@ cd gdc-ag/gdc-sandbox-workshop
 source .env
 ```
 
-5. In the browser, login to sandbox console and download `gdcloud_cli.tar.gz` from the console.
+5. In the browser, login to sandbox console as `Platform Admin`. Url is in the format `https://console.<org-name>.<zone>.google.gdch.text`
+ex. `https://console.org-1.zone1.google.gdch.text`
 
-6. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
+6. Download `gdcloud_cli.tar.gz` from the console.
 
-7. Login to `gdcloud` cli. 
+7. Run `./000-install-gdcloud.sh` to install the `gdcloud` CLI tool and configure authentication certificates. 
+
+8. Login to `gdcloud` cli. 
 
 ```bash
 login
 ```
 
-8. Edit `projects_config.yaml` to add your projects and user permissions. 
+9. Edit `projects_config.yaml` to add your projects and user permissions. 
 
-9. Run `./001-create-projects.py` to create the projects. 
+10. Run `./001-create-projects.py` to create the projects. 
 
-10. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
+11. Run `./002-apply-role-bindings.py` to apply IAM role bindings to projects and organizations. 
 
-11. In console, attach project to `user-vm-1` cluster. 
+12. In console, attach project to `user-vm-1` cluster. 
+  - Kubernetes Engine -> Clusters > user-vm1 --> Attach Project
 
-12. Run `./003-createharborproject.sh` to create Harbor project.
+13. Run `./003-createharborproject.sh` to create Harbor project.
 
-13. In console, in Harbor project, create robot account and add to `.env`.  Re-run `source .env` and `login`. See [Lab guide](./LabGuide.pdf) for more details, screenshots and walk through. 
+14. In console, in Harbor project, create robot account and add to `.env`.  Re-run `source .env` and `login`. See [Lab guide](./LabGuide.pdf) for more details, screenshots and walk through. 
 
-14. Run `./004-addharborsecret.sh` to add Harbor secret to `user-vm-1` cluster. 
+15. Run `./004-addharborsecret.sh` to add Harbor secret to `user-vm-1` cluster. 
 
-15. You are now ready to start the labs.
+You are now ready to start the labs.
 
 
 
