@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{PROJECT_NAME}}-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: {{GITLAB_GROUP}}
+    gitops.platform/group: {{GITLAB_GROUP}}
+    gitops.platform/project: {{PROJECT_NAME}}
+    gitops.platform/tier: tenant-root
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: gitops-platform
+  source:
+    repoURL: {{REPO_SSH_URL}}
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

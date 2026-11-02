@@ -1,0 +1,194 @@
+# GitLab Omnibus Single-Pod Deployment for GitOps Workshop with Google OAuth Integration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-omnibus
+  namespace: gitlab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-omnibus
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/name: gitlab-omnibus
+    app.kubernetes.io/part-of: gitlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitlab-omnibus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitlab-omnibus
+    spec:
+      serviceAccountName: gitlab-omnibus
+      containers:
+      - name: gitlab-ce
+        image: gitlab/gitlab-ce:16.8.0-ce.0
+        env:
+        - name: OPENSSL_FORCE_FIPS_MODE
+          value: "0"
+        - name: GCP_OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: client_id
+              optional: true
+        - name: GCP_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: client_secret
+              optional: true
+        - name: GDC_OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: gdc_client_id
+              optional: true
+        - name: GDC_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: gdc_client_secret
+              optional: true
+        - name: GDC_OIDC_ISSUER
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: gdc_issuer
+              optional: true
+        - name: GITLAB_HTTP_URL
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: gitlab_http_url
+              optional: true
+        - name: GITLAB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gitlab-oauth-secret
+              key: root_password
+              optional: true
+        - name: GITLAB_OMNIBUS_CONFIG
+          value: |
+            external_url (ENV['GITLAB_HTTP_URL'] && !ENV['GITLAB_HTTP_URL'].empty?) ? ENV['GITLAB_HTTP_URL'] : 'http://localhost:8081'
+            nginx['listen_port'] = 80
+            gitlab_rails['initial_root_password'] = ENV['GITLAB_ROOT_PASSWORD'] if ENV['GITLAB_ROOT_PASSWORD']
+            gitlab_rails['store_initial_root_password'] = true
+            gitlab_rails['gitlab_default_branch_protection'] = 0
+            puma['worker_processes'] = 2
+            sidekiq['max_concurrency'] = 5
+
+            # OmniAuth SSO Integration (Google OAuth on GCP / OpenID Connect on GDC)
+            gitlab_rails['omniauth_enabled'] = true
+            gitlab_rails['omniauth_block_auto_created_users'] = false
+            gitlab_rails['omniauth_providers'] = []
+
+            if ENV['GCP_OIDC_CLIENT_ID'] && !ENV['GCP_OIDC_CLIENT_ID'].empty?
+              gitlab_rails['omniauth_allow_single_sign_on'] = ['google_oauth2']
+              gitlab_rails['omniauth_auto_link_user'] = ['google_oauth2']
+              gitlab_rails['omniauth_providers'] << {
+                name: 'google_oauth2',
+                label: 'Google',
+                app_id: ENV['GCP_OIDC_CLIENT_ID'],
+                app_secret: ENV['GCP_OIDC_CLIENT_SECRET'],
+                args: {
+                  access_type: 'offline',
+                  approval_prompt: ''
+                }
+              }
+            elsif ENV['GDC_OIDC_CLIENT_ID'] && !ENV['GDC_OIDC_CLIENT_ID'].empty?
+              gitlab_rails['omniauth_allow_single_sign_on'] = ['openid_connect']
+              gitlab_rails['omniauth_auto_link_user'] = ['openid_connect']
+              gitlab_rails['omniauth_providers'] << {
+                name: 'openid_connect',
+                label: 'Fake OIDC',
+                args: {
+                  name: 'openid_connect',
+                  scope: ['openid', 'profile', 'email'],
+                  response_type: 'code',
+                  issuer: (ENV['GDC_OIDC_ISSUER'] && !ENV['GDC_OIDC_ISSUER'].empty?) ? ENV['GDC_OIDC_ISSUER'] : 'https://fake-oidc-provider.org-1.zone1.google.gdch.test',
+                  discovery: true,
+                  client_auth_method: 'query',
+                  uid_field: 'email',
+                  send_scope_to_token_endpoint: false,
+                  send_nonce: false,
+                  pkce: false,
+                  client_options: {
+                    identifier: ENV['GDC_OIDC_CLIENT_ID'],
+                    secret: ENV['GDC_OIDC_CLIENT_SECRET'],
+                    redirect_uri: ((ENV['GITLAB_HTTP_URL'] && !ENV['GITLAB_HTTP_URL'].empty?) ? ENV['GITLAB_HTTP_URL'] : 'http://localhost:8081') + '/users/auth/openid_connect/callback',
+                    userinfo_endpoint: ((ENV['GDC_OIDC_ISSUER'] && !ENV['GDC_OIDC_ISSUER'].empty?) ? ENV['GDC_OIDC_ISSUER'] : 'https://fake-oidc-provider.org-1.zone1.google.gdch.test') + '/userinfo'
+                  }
+                }
+              }
+            end
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 22
+          name: ssh
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "4"
+            memory: 8Gi
+        volumeMounts:
+        - name: gitlab-storage
+          mountPath: /etc/gitlab
+          subPath: config
+        - name: gitlab-storage
+          mountPath: /var/opt/gitlab
+          subPath: data
+        - name: gitlab-storage
+          mountPath: /var/log/gitlab
+          subPath: logs
+      volumes:
+      - name: gitlab-storage
+        persistentVolumeClaim:
+          claimName: gitlab-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-pvc
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/name: gitlab-omnibus
+    app.kubernetes.io/part-of: gitlab
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: standard-rwo
+  resources:
+    requests:
+      storage: 30Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-omnibus
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/name: gitlab-omnibus
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  - port: 22
+    targetPort: 22
+    name: ssh
+  selector:
+    app.kubernetes.io/name: gitlab-omnibus

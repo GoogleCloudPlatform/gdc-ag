@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+- crds.yaml
+- install.yaml
+- argocd-cm.yaml
+
+patches:
+- path: argocd-cmd-params-cm.yaml
+- path: argocd-ssh-known-hosts-cm.yaml
+
+configMapGenerator:
+- name: argocd-rbac-cm
+  options:
+    disableNameSuffixHash: true
+  literals:
+    - policy.default=role:admin
+  files:
+    - policy.csv
+

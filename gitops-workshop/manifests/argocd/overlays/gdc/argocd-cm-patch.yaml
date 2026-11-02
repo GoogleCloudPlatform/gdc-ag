@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  url: https://localhost:8088
+  dex.config: |
+    connectors:
+    - type: oidc
+      id: fake-oidc
+      name: GDC Fake OIDC Provider
+      config:
+        issuer: https://fake-oidc-provider.org-1.zone1.google.gdch.test
+        clientID: gpc
+        clientSecret: very-private-oidc-client-secret
+        redirectURI: https://localhost:8088/api/dex/callback
+        insecureSkipVerify: true
+        insecureEnableGroups: true
+        insecureSkipEmailVerified: true
+        userNameKey: email
+        claimMapping:
+          userName: email
+        scopes:
+        - openid
+        - profile
+        - email

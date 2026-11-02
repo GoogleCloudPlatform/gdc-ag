@@ -1,0 +1,6 @@
+- op: replace
+  path: /metadata/name
+  value: "TEMPLATE_CLUSTER_NAME"
+- op: replace
+  path: /spec/nodePools/0/name
+  value: "TEMPLATE_NODE_POOL_NAME"

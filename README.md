@@ -15,27 +15,29 @@ GDC-AG brings Google Cloud services to disconnected and highly regulated environ
 - **Partners & ISVs:** Guidance on porting, validating, and optimizing applications for GDC-AG.
 - **Customer Developers:** Practical examples and guided workshops for learning the platform's capabilities.
 
-## 📂 Repository Contents
+## 📂 Workshops Catalog
 
-Currently, the repository features:
+This repository organizes hands-on workshops as **independent, self-contained tracks** at the top level. You can run any workshop directly without completing the others:
 
-- **[GDC Sandbox Workshop](./gdc-sandbox-workshop/):** A full-featured workshop environment. It includes:
-  - Automation scripts for project creation and IAM configuration.
-  - Setup for container registries (Harbor).
-  - Sample workloads including a Web Server, Translation API, and Elasticsearch stack.
-  - Detailed lab guides and exercises.
+| Workshop | Target Environment | What You Will Build & Learn | Entry Point |
+| :--- | :--- | :--- | :--- |
+| **[GDC Sandbox Workshop](./gdc-sandbox-workshop/)** | GDC Sandbox | Project & landing zone automation, granular IAM role bindings, Harbor container registry setup, and multi-tier sample workloads (Web Server, Translation API, Elasticsearch). | [README](./gdc-sandbox-workshop/README.md) |
+| **[GitOps Workshop](./gitops-workshop/)** | GDC Sandbox & GCP (GKE Autopilot) | End-to-end declarative GitOps platform featuring self-hosted GitLab Omnibus, ArgoCD (App-of-Apps pattern), OIDC/SSH zero-trust authentication, and multi-tenant self-service workload onboarding (with interactive Antigravity CLI guides). | [README](./gitops-workshop/README.md) |
 
-*Note: This repository is expected to grow with more reference architectures, utilities, and sample code over time.*
+*Note: This repository is expected to grow with additional parallel workshops, reference architectures, utilities, and sample code over time.*
 
 ## 🚀 Getting Started
 
-To dive into GDC-AG, we recommend starting with the **[Sandbox Workshop](./gdc-sandbox-workshop/README.md)**. This workshop provides a guided experience in a sandbox environment, covering everything from initial setup to deploying complex multi-tier applications.
+Choose the workshop that matches your learning goal and navigate into its directory—each workshop manages its own prerequisites, `.env` configuration, and step-by-step guide:
 
-### Prerequisites
+- **Exploring GDC-AG core platform & workloads?** Start with the **[GDC Sandbox Workshop](./gdc-sandbox-workshop/README.md)** (`cd gdc-sandbox-workshop`).
+- **Building a declarative GitOps control plane (ArgoCD + GitLab)?** Start with the **[GitOps Workshop](./gitops-workshop/README.md)** (`cd gitops-workshop`).
 
-Specific prerequisites depend on the individual tool or workshop, but generally include:
-- Access to a GDC-AG environment (or Sandbox).
-- Basic familiarity with `kubectl` and containerization.
+### General Prerequisites
+
+Specific prerequisites are documented in each workshop's `README.md`, but generally include:
+- Access to a target environment (such as a GDC-AG / GDC Sandbox environment, or a GCP project where supported).
+- Basic familiarity with `kubectl`, `git`, and containerization.
 - Python 3.x and a Bash environment.
 
 ## 🔒 Security Best Practices

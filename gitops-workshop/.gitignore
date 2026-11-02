@@ -1,0 +1,24 @@
+# Python virtual environments & cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local runtime data & credentials
+*.log
+.env*
+!.env.gcp.example
+!.env.gdc.example
+!*.example
+.kube/config
+tmp/
+.deployed-manifests/
+manifests/argocd/**/policy.csv
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+
+# Feature specs & builds
+_feature-build/

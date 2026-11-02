@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+- ../../base
+- oidc-token-proxy.yaml
+
+patches:
+- path: argocd-cm-patch.yaml
+- path: argocd-rbac-cm-patch.yaml
+- path: argocd-dex-server-patch.yaml
+- path: argocd-cmd-params-cm-patch.yaml
+
+images:
+- name: quay.io/argoproj/argocd
+  newName: user-haas-instance-user-project.org-1.zone1.google.gdch.test/project-lowhigh/argocd
+  newTag: v3.5.1
+- name: ghcr.io/dexidp/dex
+  newName: user-haas-instance-user-project.org-1.zone1.google.gdch.test/project-lowhigh/dex
+  newTag: v2.45.0
+- name: redis
+  newName: user-haas-instance-user-project.org-1.zone1.google.gdch.test/project-lowhigh/redis
+  newTag: 8.2.3-alpine
+

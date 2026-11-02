@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: gitops-platform
+    gitops.platform/group: gitops-platform
+    gitops.platform/project: manifests
+    gitops.platform/tier: platform
+spec:
+  project: gitops-platform
+  source:
+    repoURL: git@gitlab-omnibus.gitlab.svc.cluster.local:gitops-platform/manifests.git
+    targetRevision: HEAD
+    path: manifests/argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - RespectIgnoreDifferences=true
+  ignoreDifferences:
+  - group: ""
+    kind: Secret
+    name: argocd-secret
+    jsonPointers:
+    - /data

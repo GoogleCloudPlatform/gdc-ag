@@ -1,0 +1,51 @@
+# {{PROJECT_NAME}} - GitOps Project Repository
+
+This repository contains the applications and Kubernetes manifests for the **{{PROJECT_NAME}}** project.
+
+## Architecture
+
+This project uses the **App-of-Apps** pattern. The central GitOps platform manages the root project application (`{{PROJECT_NAME}}-apps`), which monitors the `manifests/` folder in this repository:
+
+- `manifests/kustomization.yaml`: Top-level Kustomize file discovering all child `Application` resources in this repository.
+- `manifests/project.yaml`: ArgoCD `AppProject` definition isolating workloads to `{{PROJECT_NAME}}-*` namespaces.
+- `manifests/<app>-app.yaml`: Child ArgoCD Application manifest for each microservice.
+- `manifests/<app>/`: Kubernetes Deployment and Service definitions for each microservice.
+
+## Adding a New Application / Microservice
+
+To add a new microservice (e.g. `catalog`):
+1. Create a directory `manifests/catalog/` containing your Kubernetes YAMLs (`deployment.yaml`, `service.yaml`, `kustomization.yaml`).
+2. Add a child Application manifest `manifests/catalog-app.yaml`:
+   ```yaml
+   apiVersion: argoproj.io/v1alpha1
+   kind: Application
+   metadata:
+     name: catalog
+     namespace: argocd
+     labels:
+       app.kubernetes.io/part-of: {{GITLAB_GROUP}}
+       gitops.platform/group: {{GITLAB_GROUP}}
+       gitops.platform/project: {{PROJECT_NAME}}
+       gitops.platform/tier: workload
+     finalizers:
+       - resources-finalizer.argocd.argoproj.io
+   spec:
+     project: {{PROJECT_NAME}}
+     source:
+       repoURL: {{REPO_SSH_URL}}
+       targetRevision: main
+       path: manifests/catalog
+     destination:
+       server: https://kubernetes.default.svc
+       namespace: catalog
+     syncPolicy:
+       syncOptions:
+         - CreateNamespace=true
+   ```
+3. Add `catalog-app.yaml` to `manifests/kustomization.yaml`:
+   ```yaml
+   resources:
+     - project.yaml
+     - catalog-app.yaml
+   ```
+4. Commit and push via Merge Request to `main`! ArgoCD will automatically detect the new application and deploy it.
