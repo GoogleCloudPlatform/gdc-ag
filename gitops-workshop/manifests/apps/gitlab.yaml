@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitlab
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: gitops-platform
+    gitops.platform/group: gitops-platform
+    gitops.platform/project: manifests
+    gitops.platform/tier: platform
+spec:
+  project: gitops-platform
+  source:
+    repoURL: git@gitlab-omnibus.gitlab.svc.cluster.local:gitops-platform/manifests.git
+    targetRevision: HEAD
+    path: manifests/gitlab
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitlab
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true

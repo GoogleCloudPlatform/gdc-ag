@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Base ArgoCD Server URL configuration
+  url: http://localhost:8080
+  # Dex Google OpenID Connect (OIDC) Authentication Integration
+  dex.config: |
+    connectors:
+      - type: oidc
+        id: google
+        name: Google
+        config:
+          issuer: https://accounts.google.com
+          clientID: $oidc.google.clientID
+          clientSecret: $oidc.google.clientSecret
+          requestedScopes: ["openid", "profile", "email"]

@@ -1,0 +1,18 @@
+apiVersion: cluster.gdc.goog/v1
+kind: Cluster
+metadata:
+  name: BASE_NOT_CONFIGURED_CLUSTER_NAME
+spec:
+  clusterNetwork:
+    podCIDRSize: 21
+    serviceCIDRSize: 23
+  initialVersion:
+    kubernetesVersion: 1.29.12-gke.800
+  loadBalancer:
+    ingressServiceIPSize: 21
+  nodePools:
+  - machineTypeName: n3-highcpu-12-gdc-test
+    name: BASE_NOT_CONFIGURED_NODE_POOL_NAME
+    nodeCount: 1
+  releaseChannel:
+    channel: UNSPECIFIED

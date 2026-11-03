@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{PROJECT_NAME}}
+  namespace: argocd
+spec:
+  description: Workload project for {{PROJECT_NAME}}
+  sourceRepos:
+    - '{{REPO_SSH_URL}}'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-omnibus
+  namespace: gitlab
+spec:
+  template:
+    metadata:
+      labels:
+        egress.networking.gke.io/enabled: "true"
+    spec:
+      hostAliases:
+      - ip: "TEMPLATE_OIDC_TOKEN_PROXY_IP"
+        hostnames:
+        - "fake-oidc-provider.org-1.zone1.google.gdch.test"
+      initContainers:
+      - name: init-ssh-keys
+        image: gitlab/gitlab-ce:16.8.0-ce.0
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          cp -n /tmp/ssh-keys/ssh_host_* /etc/gitlab/ || true
+          chmod 0600 /etc/gitlab/ssh_host_*_key || true
+          chmod 0644 /etc/gitlab/ssh_host_*_key.pub || true
+          mkdir -p /etc/gitlab/trusted-certs
+          cp /tmp/tls-certs/*.crt /etc/gitlab/trusted-certs/ || true
+          chmod 0644 /etc/gitlab/trusted-certs/* || true
+        volumeMounts:
+        - name: gitlab-storage
+          mountPath: /etc/gitlab
+          subPath: config
+        - name: ssh-keys-volume
+          mountPath: /tmp/ssh-keys
+        - name: oidc-proxy-cert-volume
+          mountPath: /tmp/tls-certs
+      containers:
+      - name: gitlab-ce
+        env:
+        - name: OPENSSL_FORCE_FIPS_MODE
+          value: "0"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          mkdir -p /opt/gitlab/etc/sshd/env && echo 0 > /opt/gitlab/etc/sshd/env/OPENSSL_FORCE_FIPS_MODE && exec /assets/init-container
+      imagePullSecrets:
+      - name: harbor-secret
+      volumes:
+      - name: ssh-keys-volume
+        secret:
+          secretName: gitlab-ssh-keys-secret
+          defaultMode: 256
+      - name: oidc-proxy-cert-volume
+        secret:
+          secretName: oidc-proxy-tls-cert
+          optional: true
+

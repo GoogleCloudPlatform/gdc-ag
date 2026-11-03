@@ -1,0 +1,24 @@
+# Python virtual environments & bytecode
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local environment files, credentials & logs
+.env
+.env.*
+!*.example
+!.env_sample
+*.log
+.kube/config
+serviceaccountskey.json
+
+# IDE & OS artifacts
+.DS_Store
+.vscode/
+.idea/
+
+# Temporary, runtime & feature spec directories
+tmp/
+_feature-build/
+.deployed-manifests/

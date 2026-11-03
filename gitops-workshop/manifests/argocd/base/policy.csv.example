@@ -1,0 +1,7 @@
+# ArgoCD RBAC Policy Definitions
+# Format:
+# p, <role/user/group>, <resource>, <action>, <object>, <allow/deny>
+# g, <user/email/group>, <role>
+
+g, oscar, role:admin
+g, user@example.com, role:admin

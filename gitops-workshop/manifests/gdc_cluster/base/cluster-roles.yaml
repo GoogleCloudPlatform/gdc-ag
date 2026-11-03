@@ -1,0 +1,40 @@
+apiVersion: iam.gdc.goog/v1
+kind: StandardClusterRole
+metadata:
+  labels:
+    iam.private.gdc.goog/owner-operable-component: MKS
+    user-roles.system.private.gdc.goog/hierarchy-level: project
+    user-roles.system.private.gdc.goog/persona: app-operator
+    user-roles.system.private.gdc.goog/type: predefined
+  name: cluster-admin
+spec:
+  rules:
+  - apiGroups:
+    - '*'
+    resources:
+    - '*'
+    verbs:
+    - '*'
+---
+apiVersion: iam.gdc.goog/v1
+kind: StandardClusterRole
+metadata:
+  labels:
+    iam.private.gdc.goog/owner-operable-component: MKS
+    user-roles.system.private.gdc.goog/hierarchy-level: project
+    user-roles.system.private.gdc.goog/persona: app-operator
+    user-roles.system.private.gdc.goog/type: predefined
+  name: cluster-crd-admin
+spec:
+  rules:
+  - apiGroups:
+    - apiextensions.k8s.io
+    resources:
+    - customresourcedefinitions
+    verbs:
+    - get
+    - list
+    - delete
+    - patch
+    - update
+

@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-dex-server
+  namespace: argocd
+spec:
+  template:
+    spec:
+      hostAliases:
+      - ip: "TEMPLATE_OIDC_TOKEN_PROXY_IP"
+        hostnames:
+        - fake-oidc-provider.org-1.zone1.google.gdch.test
+      containers:
+      - name: dex
+        securityContext:
+          runAsUser: 1001
+

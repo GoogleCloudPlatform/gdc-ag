@@ -1,0 +1,43 @@
+apiVersion: iam.gdc.goog/v1
+kind: StandardClusterRoleBinding
+metadata:
+  labels:
+    iam.private.gdc.goog/owner-operable-component: MKS
+    user-roles.system.private.gdc.goog/hierarchy-level: project
+    user-roles.system.private.gdc.goog/persona: app-operator
+    user-roles.system.private.gdc.goog/type: predefined
+  name: admin-cluster-admin
+spec:
+  roleRef:
+    apiGroup: iam.gdc.goog
+    kind: StandardClusterRole
+    name: cluster-admin
+  subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: platform-admin@example.com
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: fop-platform-admin@example.com
+---
+apiVersion: iam.gdc.goog/v1
+kind: StandardClusterRoleBinding
+metadata:
+  labels:
+    iam.private.gdc.goog/owner-operable-component: MKS
+    user-roles.system.private.gdc.goog/hierarchy-level: project
+    user-roles.system.private.gdc.goog/persona: app-operator
+    user-roles.system.private.gdc.goog/type: predefined
+  name: admin-cluster-crd-admin
+spec:
+  roleRef:
+    apiGroup: iam.gdc.goog
+    kind: StandardClusterRole
+    name: cluster-crd-admin
+  subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: platform-admin@example.com
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: fop-platform-admin@example.com
