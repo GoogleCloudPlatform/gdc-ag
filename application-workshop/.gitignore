@@ -1,0 +1,26 @@
+# Environment & Secrets
+.env
+*.env.local
+manifests/base/app.properties
+manifests/base/app-secrets.properties
+
+# Ephemeral Deployed Manifests Working Directory
+.deployed-manifests/
+
+# Frontend build artifacts & dependencies
+app/frontend/node_modules/
+app/frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
