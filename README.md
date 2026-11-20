@@ -23,6 +23,7 @@ This repository organizes hands-on workshops as **independent, self-contained tr
 | :--- | :--- | :--- | :--- |
 | **[GDC Sandbox Workshop](./gdc-sandbox-workshop/)** | GDC Sandbox | Project & landing zone automation, granular IAM role bindings, Harbor container registry setup, and multi-tier sample workloads (Web Server, Translation API, Elasticsearch). | [README](./gdc-sandbox-workshop/README.md) |
 | **[GitOps Workshop](./gitops-workshop/)** | GDC Sandbox & GCP (GKE Autopilot) | End-to-end declarative GitOps platform featuring self-hosted GitLab Omnibus, ArgoCD (App-of-Apps pattern), OIDC/SSH zero-trust authentication, and multi-tenant self-service workload onboarding (with interactive Antigravity CLI guides). | [README](./gitops-workshop/README.md) |
+| **[Application Workshop](./application-workshop/)** | GDC Sandbox & GCP (GKE Autopilot) | Multi-workload GitOps application delivery (`apps/translate-api/` stateless Deployment & `apps/upload-api/` StatefulSet with 10Gi PVC + Object Storage): build & push images to Harbor / Artifact Registry and integrate manifests into a `gitops-workshop` project repository. | [README](./application-workshop/README.md) |
 
 *Note: This repository is expected to grow with additional parallel workshops, reference architectures, utilities, and sample code over time.*
 
@@ -32,6 +33,7 @@ Choose the workshop that matches your learning goal and navigate into its direct
 
 - **Exploring GDC-AG core platform & workloads?** Start with the **[GDC Sandbox Workshop](./gdc-sandbox-workshop/README.md)** (`cd gdc-sandbox-workshop`).
 - **Building a declarative GitOps control plane (ArgoCD + GitLab)?** Start with the **[GitOps Workshop](./gitops-workshop/README.md)** (`cd gitops-workshop`).
+- **Shipping an application (`app/` + `manifests/`) via Harbor & GitOps?** Start with the **[Application Workshop](./application-workshop/README.md)** (`cd application-workshop`).
 
 ### General Prerequisites
 

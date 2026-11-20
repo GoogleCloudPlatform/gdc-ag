@@ -1,0 +1,106 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: translate-api
+  labels:
+    app: translate-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: translate-api
+  template:
+    metadata:
+      labels:
+        app: translate-api
+        egress.networking.gke.io/enabled: "true"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: frontend
+          image: frontendimageplaceholder
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+        - name: api
+          image: apiimageplaceholder
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: api
+          env:
+            - name: TRANSLATE_APP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: translate-api-secrets
+                  key: TRANSLATE_APP_API_KEY
+            - name: KEYCLOAK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: translate-api-config
+                  key: KEYCLOAK_URL
+                  optional: true
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: translate-api-config
+                  key: KEYCLOAK_REALM
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      imagePullSecrets:
+        - name: harbor-pull-secret

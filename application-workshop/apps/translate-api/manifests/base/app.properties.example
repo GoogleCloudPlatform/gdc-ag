@@ -1,0 +1,4 @@
+IMAGE_FRONTEND=harbor.org-1.zone1.google.gdch.test/gitops-platform/frontend:v1.0.0
+IMAGE_API=harbor.org-1.zone1.google.gdch.test/gitops-platform/api:v1.0.0
+KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_REALM=sandbox

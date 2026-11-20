@@ -1,0 +1,4 @@
+IMAGE=harbor.org-1.zone1.google.gdch.test/gitops-platform/upload-api:v1.0.0
+BUCKET_NAME=upload-api-archives
+STORAGE_ENDPOINT=https://objectstorage.org-1.zone1.google.gdch.test
+PLATFORM_ADMIN=platform-admin@example.com

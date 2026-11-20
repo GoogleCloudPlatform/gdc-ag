@@ -22,10 +22,12 @@ This repository (`gdc-ag`) hosts **independent, parallel hands-on workshops**, r
 | :--- | :--- | :--- | :--- |
 | **[`gdc-sandbox-workshop/`](gdc-sandbox-workshop/README.md)** | Landing zone setup, IAM role bindings, Harbor registry, and sample workloads (Web Server, Translation API, Elasticsearch) | GDC Sandbox | Guided via [`README.md`](gdc-sandbox-workshop/README.md) & `LAB-1..3.md` |
 | **[`gitops-workshop/`](gitops-workshop/README.md)** | Enterprise declarative GitOps platform with ArgoCD (App-of-Apps), self-hosted GitLab Omnibus, OIDC/SSH auth, and multi-tenant self-service onboarding | GDC Sandbox & GCP (GKE Autopilot) | `/gitops-workshop-guide`, `/gitops-provision-project` (shared UX in `gitops-interaction-guide`) |
+| **[`application-workshop/`](application-workshop/README.md)** | Multi-workload GitOps delivery (`apps/translate-api/` & `apps/upload-api/`): build & push images to Harbor / Artifact Registry and integrate manifests into an existing `gitops-workshop` project repository | GDC Sandbox & GCP (GKE Autopilot) | `/app-workshop-guide`, `/app-deploy` (shared UX in `app-interaction-guide`) |
 
 ### Routing Notes for AI Agents Started at Repo Root
 - If a user asks about available workshops from the repository root, summarize the catalog above and help them pick the right track.
 - If a user triggers `/gitops-workshop-guide` or `/gitops-provision-project` from the repository root (`gdc-ag/`), ensure all script executions, tmux panes, and `.env` operations run inside `gitops-workshop/` (see [`gitops-workshop/AGENTS.md`](gitops-workshop/AGENTS.md)).
+- If a user triggers `/app-workshop-guide` or `/app-deploy` from the repository root (`gdc-ag/`), ensure all script executions, tmux panes, and `.env` operations run inside `application-workshop/` (see [`application-workshop/AGENTS.md`](application-workshop/AGENTS.md)).
 
 ---
 
